@@ -85,7 +85,7 @@ void bind_submodule(py::module_ const& m) {
 
 		The optimization problem is represented as an heterogenous bipartite graph.
 		On one side, a node is associated with one variable, on the other side a node is
-		associated with one constraint.
+		associated with one LP row.
 		There exist an edge between a variable and a constraint if the variable exists in the
 		constraint with a non-zero coefficient.
 
@@ -93,41 +93,59 @@ void bind_submodule(py::module_ const& m) {
 		Each edge is associated with the coefficient of the variable in the constraint.
 	)")
 			.def_auto_copy()
-			.def_auto_pickle(std::array{"column_features", "row_features", "edge_features"})
+			.def_auto_pickle(std::array{"variable_features", "row_features", "edge_features"})
 			.def_readwrite_xtensor(
-				"column_features",
-				&NodeBipartiteObs::column_features,
+				"variable_features",
+				&NodeBipartiteObs::variable_features,
 				"A matrix where each row is represents a variable, and each column a feature of the variables.")
 			.def_readwrite_xtensor(
 				"row_features",
 				&NodeBipartiteObs::row_features,
 				"A matrix where each row is represents a constraint, and each column a feature of the constraints.")
+			// FIXME remove in version >0.8
+			.def_property(
+				"column_features",
+				[](py::handle self) {
+					PyErr_WarnEx(PyExc_DeprecationWarning, "column_features is deprecated, use variable_features.", 1);
+					return self.attr("variable_features");
+				},
+				[](py::handle self, py::handle const val) {
+					PyErr_WarnEx(PyExc_DeprecationWarning, "column_features is deprecated, use variable_features.", 1);
+					self.attr("variable_features") = val;
+				},
+				"A matrix where each row is represents a variable, and each column a feature of the variables.")
 			.def_readwrite(
 				"edge_features",
 				&NodeBipartiteObs::edge_features,
 				"The constraint matrix of the optimization problem, with rows for contraints and "
 				"columns for variables.");
 
-	py::enum_<NodeBipartiteObs::ColumnFeatures>(node_bipartite_obs, "ColumnFeatures")
-		.value("objective", NodeBipartiteObs::ColumnFeatures::objective)
-		.value("is_type_binary", NodeBipartiteObs::ColumnFeatures::is_type_binary)
-		.value("is_type_integer", NodeBipartiteObs::ColumnFeatures::is_type_integer)
-		.value("is_type_implicit_integer", NodeBipartiteObs::ColumnFeatures::is_type_implicit_integer)
-		.value("is_type_continuous", NodeBipartiteObs::ColumnFeatures::is_type_continuous)
-		.value("has_lower_bound", NodeBipartiteObs::ColumnFeatures::has_lower_bound)
-		.value("has_upper_bound", NodeBipartiteObs::ColumnFeatures::has_upper_bound)
-		.value("normed_reduced_cost", NodeBipartiteObs::ColumnFeatures::normed_reduced_cost)
-		.value("solution_value", NodeBipartiteObs::ColumnFeatures::solution_value)
-		.value("solution_frac", NodeBipartiteObs::ColumnFeatures::solution_frac)
-		.value("is_solution_at_lower_bound", NodeBipartiteObs::ColumnFeatures::is_solution_at_lower_bound)
-		.value("is_solution_at_upper_bound", NodeBipartiteObs::ColumnFeatures::is_solution_at_upper_bound)
-		.value("scaled_age", NodeBipartiteObs::ColumnFeatures::scaled_age)
-		.value("incumbent_value", NodeBipartiteObs::ColumnFeatures::incumbent_value)
-		.value("average_incumbent_value", NodeBipartiteObs::ColumnFeatures::average_incumbent_value)
-		.value("is_basis_lower", NodeBipartiteObs::ColumnFeatures::is_basis_lower)
-		.value("is_basis_basic", NodeBipartiteObs::ColumnFeatures::is_basis_basic)
-		.value("is_basis_upper", NodeBipartiteObs::ColumnFeatures::is_basis_upper)
-		.value("is_basis_zero", NodeBipartiteObs::ColumnFeatures ::is_basis_zero);
+	py::enum_<NodeBipartiteObs::VariableFeatures>(node_bipartite_obs, "VariableFeatures")
+		.value("objective", NodeBipartiteObs::VariableFeatures::objective)
+		.value("is_type_binary", NodeBipartiteObs::VariableFeatures::is_type_binary)
+		.value("is_type_integer", NodeBipartiteObs::VariableFeatures::is_type_integer)
+		.value("is_type_implicit_integer", NodeBipartiteObs::VariableFeatures::is_type_implicit_integer)
+		.value("is_type_continuous", NodeBipartiteObs::VariableFeatures::is_type_continuous)
+		.value("has_lower_bound", NodeBipartiteObs::VariableFeatures::has_lower_bound)
+		.value("has_upper_bound", NodeBipartiteObs::VariableFeatures::has_upper_bound)
+		.value("normed_reduced_cost", NodeBipartiteObs::VariableFeatures::normed_reduced_cost)
+		.value("solution_value", NodeBipartiteObs::VariableFeatures::solution_value)
+		.value("solution_frac", NodeBipartiteObs::VariableFeatures::solution_frac)
+		.value("is_solution_at_lower_bound", NodeBipartiteObs::VariableFeatures::is_solution_at_lower_bound)
+		.value("is_solution_at_upper_bound", NodeBipartiteObs::VariableFeatures::is_solution_at_upper_bound)
+		.value("scaled_age", NodeBipartiteObs::VariableFeatures::scaled_age)
+		.value("incumbent_value", NodeBipartiteObs::VariableFeatures::incumbent_value)
+		.value("average_incumbent_value", NodeBipartiteObs::VariableFeatures::average_incumbent_value)
+		.value("is_basis_lower", NodeBipartiteObs::VariableFeatures::is_basis_lower)
+		.value("is_basis_basic", NodeBipartiteObs::VariableFeatures::is_basis_basic)
+		.value("is_basis_upper", NodeBipartiteObs::VariableFeatures::is_basis_upper)
+		.value("is_basis_zero", NodeBipartiteObs::VariableFeatures ::is_basis_zero);
+
+	// FIXME remove in Ecole >0.8
+	node_bipartite_obs.def_property_readonly_static("ColumnFeatures", [](py::handle self) {
+		PyErr_WarnEx(PyExc_DeprecationWarning, "ColumnFeatures is deprecated, use VariableFeatures.", 1);
+		return self.attr("VariableFeatures");
+	});
 
 	py::enum_<NodeBipartiteObs::RowFeatures>(node_bipartite_obs, "RowFeatures")
 		.value("bias", NodeBipartiteObs::RowFeatures::bias)
@@ -218,13 +236,13 @@ void bind_submodule(py::module_ const& m) {
 		Strong branching score observation function on branch-and bound node.
 
 		This observation obtains scores for all LP or pseudo candidate variables at a
-		branch-and-bound node.  The strong branching score measures the quality of branching
-		for each variable.  This observation can be used as an expert for imitation
-		learning algorithms.
+		branch-and-bound node.
+		The strong branching score measures the quality of branching for each variable.
+		This observation can be used as an expert for imitation learning algorithms.
 
 		This observation function extracts an array containing the strong branching score for
-		each variable in the problem which can be indexed by the action set.  Variables for which
-		a strong branching score is not applicable are filled with NaN.
+		each variable in the problem which can be indexed by the action set.
+		Variables for which a strong branching score is not applicable are filled with ``NaN``.
 	)");
 	strong_branching_scores.def(py::init<bool>(), py::arg("pseudo_candidates") = true, R"(
 		Constructor for StrongBranchingScores.
@@ -251,8 +269,8 @@ void bind_submodule(py::module_ const& m) {
 		pseudocost branching (also known as hybrid branching).
 
 		This observation function extracts an array containing the pseudocost for
-		each variable in the problem which can be indexed by the action set.  Variables for which
-		a pseudocost is not applicable are filled with NaN.
+		each variable in the problem which can be indexed by the action set.
+		Variables for which a pseudocost is not applicable are filled with ``NaN``.
 	)");
 	pseudocosts.def(py::init<>());
 	def_before_reset(pseudocosts, R"(Do nothing.)");
@@ -263,8 +281,10 @@ void bind_submodule(py::module_ const& m) {
 		auto_class<Khalil2016Obs>(m, "Khalil2016Obs", R"(
 		Branching candidates features from Khalil et al. (2016).
 
-		The observation is a matrix where rows represent pseudo branching candidates and columns
-		represent features related to these variables.
+		The observation is a matrix where rows represent all variables and columns represent features related
+		to these variables.
+		Only rows representing pseudo branching candidate contain meaningful observation, other rows are filled
+		with ``NaN``.
 		See [Khalil2016]_ for a complete reference on this observation function.
 
 		The first :py:attr:`Khalil2016Obs.n_static_features` are static (they do not change through the solving
